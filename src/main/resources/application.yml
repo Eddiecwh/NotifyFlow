@@ -13,6 +13,7 @@ spring:
     password: ${RABBITMQ_PASSWORD}
   mail:
     host: smtp.gmail.com
+#    host: smtp.invalid.com
     port: 587
     username: ${MAIL_USERNAME}
     password: ${MAIL_PASSWORD}

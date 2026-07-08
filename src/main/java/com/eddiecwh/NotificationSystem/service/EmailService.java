@@ -6,6 +6,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.MailAuthenticationException;
+import org.springframework.mail.MailException;
+import org.springframework.mail.MailParseException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
@@ -37,9 +40,16 @@ public class EmailService {
             mailSender.send(message);
             jobService.markJobAsSent(job.getId());
             log.info("Email has been sent for jobId: {}", job.getId());
-        } catch (Exception e) {
+        } catch (MailParseException | MailAuthenticationException e) {
             jobService.markJobAsFailed(job.getId(), e.getMessage());
-            log.error("Email failed to send: {}", e.getMessage());
+            log.error("EmailService::consumeEmailMessage - Permanent job failure for jobId: {}, error: {}", job.getId(), e.getMessage());
+        } catch (MailException e) {
+            jobService.markJobAsRetry(job.getId(), e.getMessage());
+            log.error("EmailService::consumeEmailMessage - Transient job failure for jobId: {}, error: {}", job.getId(), e.getMessage());
+        }
+        catch (Exception e) {
+            jobService.markJobAsRetry(job.getId(), e.getMessage());
+            log.error("EmailService::consumeEmailMessage - Unexpected failure for jobId: {}, error: {}", job.getId(), e.getMessage());
         }
     }
 }

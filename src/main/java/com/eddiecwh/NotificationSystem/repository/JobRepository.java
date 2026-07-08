@@ -16,4 +16,6 @@ public interface JobRepository extends JpaRepository<Job, Long> {
     List<Job> findByRequestUserId(Long userId);
 
     List<Job> findAllByJobStatusAndRequest_ScheduledDateLessThanEqual(JobStatus status, LocalDateTime dateTime);
+
+    List<Job> findAllByJobStatusAndNextRetryDtLessThanEqual(JobStatus status, LocalDateTime dateTime);
 }

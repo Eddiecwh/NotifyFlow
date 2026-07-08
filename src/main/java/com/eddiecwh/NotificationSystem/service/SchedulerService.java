@@ -19,12 +19,28 @@ public class SchedulerService {
     private final JobService jobService;
 
     @Scheduled(fixedRate = 60000)
-    public void processScheduledJobs() {
+    public void processJobs() {
+        processScheduledJobs();
+        processRetryJobs();
+    }
+
+    private void processScheduledJobs() {
         List<Job> scheduledJobList = jobRepository.
                 findAllByJobStatusAndRequest_ScheduledDateLessThanEqual(JobStatus.SCHEDULED, LocalDateTime.now());
 
-        for (Job job : scheduledJobList) {
-            jobService.releaseScheduledJob(job);
+        releaseJobs(scheduledJobList);
+    }
+
+    private void processRetryJobs() {
+        List<Job> retryJobList = jobRepository.
+                findAllByJobStatusAndNextRetryDtLessThanEqual(JobStatus.RETRYING, LocalDateTime.now());
+
+        releaseJobs(retryJobList);
+    }
+
+    private void releaseJobs(List<Job> jobList) {
+        for (Job job : jobList) {
+            jobService.releaseJob(job);
             log.info("Adding jobId: {} to active queue", job.getId());
         }
     }
